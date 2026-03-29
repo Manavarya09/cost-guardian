@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #0d1117;
+    font-family: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px;
+  }
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    max-width: 1100px;
+    width: 100%;
+  }
+  .header {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  .header h1 {
+    font-size: 36px;
+    color: #58a6ff;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .header h1 span { color: #f0883e; }
+  .header p {
+    color: #8b949e;
+    font-size: 16px;
+    margin-top: 6px;
+    font-family: -apple-system, sans-serif;
+  }
+  .header .tags {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .header .tag {
+    background: #1f2937;
+    color: #7ee787;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    border: 1px solid #30363d;
+  }
+  .card {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #58a6ff, #f0883e);
+  }
+  .card-title {
+    color: #58a6ff;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .terminal {
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #c9d1d9;
+    white-space: pre;
+    overflow: hidden;
+  }
+  .green { color: #7ee787; }
+  .yellow { color: #e3b341; }
+  .orange { color: #f0883e; }
+  .red { color: #f85149; }
+  .blue { color: #58a6ff; }
+  .dim { color: #484f58; }
+  .bright { color: #f0f6fc; font-weight: 600; }
+
+  .bar-green { color: #7ee787; }
+  .bar-yellow { color: #e3b341; }
+  .bar-red { color: #f85149; }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat {
+    background: #0d1117;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #f0f6fc;
+  }
+  .stat-value.cost { color: #7ee787; }
+  .stat-value.rate { color: #f0883e; }
+  .stat-value.tokens { color: #58a6ff; }
+  .stat-value.budget { color: #e3b341; }
+  .stat-label {
+    font-size: 11px;
+    color: #8b949e;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 4px;
+  }
+
+  .budget-bar {
+    margin-top: 8px;
+  }
+  .budget-bar-track {
+    background: #21262d;
+    border-radius: 4px;
+    height: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .budget-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #0d1117;
+  }
+  .budget-bar-fill.ok { background: linear-gradient(90deg, #238636, #7ee787); }
+  .budget-bar-fill.warn { background: linear-gradient(90deg, #9e6a03, #e3b341); }
+  .budget-bar-fill.danger { background: linear-gradient(90deg, #da3633, #f85149); }
+  .budget-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 11px;
+    color: #8b949e;
+  }
+
+  .footer {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .footer code {
+    background: #1f2937;
+    color: #7ee787;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    border: 1px solid #30363d;
+  }
+  .footer p {
+    color: #484f58;
+    font-size: 12px;
+    margin-top: 10px;
+    font-family: -apple-system, sans-serif;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <h1><span>$</span> Cost Guardian</h1>
+    <p>Real-time cost tracking & budget management for Claude Code</p>
+    <div class="tags">
+      <span class="tag">Zero Setup</span>
+      <span class="tag">No Docker</span>
+      <span class="tag">No Grafana</span>
+      <span class="tag">100% Local</span>
+      <span class="tag">Open Source</span>
+    </div>
+  </div>
+
+  <!-- Session Stats -->
+  <div class="card">
+    <div class="card-title">Session Overview</div>
+    <div class="stats-grid">
+      <div class="stat">
+        <div class="stat-value cost">$2.41</div>
+        <div class="stat-label">Total Cost</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value rate">$0.13</div>
+        <div class="stat-label">Per Minute</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value tokens">12.3K</div>
+        <div class="stat-label">Tokens Used</div>
+      </div>
+      <div class="stat">
+        <div class="stat-value budget">48%</div>
+        <div class="stat-label">Budget Used</div>
+      </div>
+    </div>
+    <div class="budget-bar">
+      <div class="budget-bar-track">
+        <div class="budget-bar-fill ok" style="width: 48%">$2.41</div>
+      </div>
+      <div class="budget-labels">
+        <span>$0</span>
+        <span>Session Budget: $5.00</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tool Breakdown -->
+  <div class="card">
+    <div class="card-title">Per-Tool Breakdown</div>
+    <div class="terminal"><span class="bright">Tool          Cost    Calls</span>
+<span class="orange">████████████████</span> Agent    <span class="bright">$1.20</span>   <span class="dim">3x</span>
+<span class="green">██████████▌</span>      Read     <span class="bright">$0.62</span>  <span class="dim">28x</span>
+<span class="yellow">██████</span>           Edit     <span class="bright">$0.34</span>  <span class="dim">12x</span>
+<span class="blue">████</span>             Bash     <span class="bright">$0.18</span>   <span class="dim">8x</span>
+<span class="dim">██▌</span>              Grep     <span class="bright">$0.07</span>  <span class="dim">15x</span></div>
+  </div>
+
+  <!-- Daily Spend Chart -->
+  <div class="card full-width">
+    <div class="card-title">Daily Spend — Last 7 Days</div>
+    <div class="terminal"><span class="dim">Mon</span>  <span class="green">█████████▊</span>                             <span class="bright"> $8.42</span>
+<span class="dim">Tue</span>  <span class="green">██████████████▏</span>                        <span class="bright">$12.15</span>
+<span class="dim">Wed</span>  <span class="green">███████▉</span>                               <span class="bright"> $6.80</span>
+<span class="dim">Thu</span>  <span class="orange">██████████████████████</span>                 <span class="bright">$18.90</span>  <span class="red">← peak</span>
+<span class="dim">Fri</span>  <span class="yellow">████████████████▌</span>                      <span class="bright">$14.20</span>
+<span class="dim">Sat</span>  <span class="green">██████████▊</span>                            <span class="bright"> $9.55</span>
+<span class="dim">Sun</span>  <span class="green">███▌</span>                                   <span class="bright"> $2.41</span>  <span class="green">← today</span>
+
+<span class="dim">Budget Status:</span>  Daily <span class="yellow">████████▌░░░░░░░░░░░░</span> 43%   Weekly <span class="orange">██████████████▏░░░░░░</span> 71%</div>
+  </div>
+
+  <div class="footer">
+    <code>claude plugin install cost-guardian</code>
+    <p>github.com/Manavarya09/cost-guardian &nbsp;·&nbsp; MIT License &nbsp;·&nbsp; Zero dependencies</p>
+  </div>
+
+</div>
+</body>
+</html>
