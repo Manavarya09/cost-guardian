@@ -1,14 +1,13 @@
 #!/usr/bin/env node
 const store = require('./store');
 
-const BAR_CHARS = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉', '█'];
+const W = 48; // inner width between ║ chars
 
-function bar(value, maxValue, width = 30) {
-  if (maxValue === 0) return '';
+function bar(value, maxValue, width = 20) {
+  if (maxValue === 0) return ' '.repeat(width);
   const ratio = Math.min(value / maxValue, 1);
-  const full = Math.floor(ratio * width);
-  const frac = Math.floor((ratio * width - full) * 8);
-  return '█'.repeat(full) + (frac > 0 ? BAR_CHARS[frac] : '') + ' '.repeat(Math.max(0, width - full - 1));
+  const filled = Math.round(ratio * width);
+  return '█'.repeat(filled) + '░'.repeat(width - filled);
 }
 
 function formatCost(usd) {
@@ -22,6 +21,20 @@ function formatTokens(n) {
   return String(n);
 }
 
+function pad(str, len) {
+  // Pad string to exact visual width
+  const visual = [...str].length;
+  return str + ' '.repeat(Math.max(0, len - visual));
+}
+
+function line(content) {
+  return `║  ${pad(content, W - 4)}  ║`;
+}
+
+function sep() {
+  return '╠' + '═'.repeat(W) + '╣';
+}
+
 function sessionReport(sessionId) {
   const cost = store.getSessionCost(sessionId);
   const tokens = store.getSessionTokens(sessionId);
@@ -31,49 +44,50 @@ function sessionReport(sessionId) {
 
   let elapsed = 0;
   if (startTime) {
-    elapsed = (Date.now() - new Date(startTime + 'Z').getTime()) / 1000 / 60; // minutes
+    elapsed = (Date.now() - new Date(startTime + 'Z').getTime()) / 1000 / 60;
   }
   const burnRate = elapsed > 0 ? cost / elapsed : 0;
 
-  const lines = [];
-  lines.push('');
-  lines.push('╔══════════════════════════════════════════════╗');
-  lines.push('║          COST GUARDIAN — Session Report      ║');
-  lines.push('╠══════════════════════════════════════════════╣');
-  lines.push(`║  Total Cost:     ${formatCost(cost).padEnd(28)}║`);
-  lines.push(`║  Total Tokens:   ${formatTokens(tokens).padEnd(28)}║`);
-  lines.push(`║  Duration:       ${elapsed.toFixed(1).padEnd(24)} min ║`);
-  lines.push(`║  Burn Rate:      ${formatCost(burnRate).padEnd(24)}/min ║`);
+  const out = [];
+  out.push('');
+  out.push('╔' + '═'.repeat(W) + '╗');
+  out.push('║' + '  COST GUARDIAN — Session Report'.padEnd(W) + '║');
+  out.push(sep());
+  out.push(line(`Total Cost:     ${formatCost(cost)}`));
+  out.push(line(`Total Tokens:   ${formatTokens(tokens)}`));
+  out.push(line(`Duration:       ${elapsed.toFixed(1)} min`));
+  out.push(line(`Burn Rate:      ${formatCost(burnRate)}/min`));
 
   if (budget) {
     const pct = budget.limit > 0 ? Math.min((cost / budget.limit) * 100, 100) : 0;
-    lines.push('╠══════════════════════════════════════════════╣');
-    lines.push(`║  Budget:         ${formatCost(budget.limit).padEnd(24)} (${budget.mode}) ║`);
-    lines.push(`║  Used:           ${bar(cost, budget.limit, 20)} ${pct.toFixed(0).padStart(3)}%  ║`);
-    lines.push(`║  Remaining:      ${formatCost(Math.max(0, budget.limit - cost)).padEnd(28)}║`);
+    out.push(sep());
+    out.push(line(`Budget:  ${formatCost(budget.limit)} (${budget.mode})`));
+    out.push(line(`Used:    ${bar(cost, budget.limit, 24)} ${pct.toFixed(0).padStart(3)}%`));
+    out.push(line(`Left:    ${formatCost(Math.max(0, budget.limit - cost))}`));
     if (burnRate > 0) {
       const minsLeft = (budget.limit - cost) / burnRate;
-      lines.push(`║  Time to limit:  ${minsLeft > 0 ? `~${minsLeft.toFixed(0)} min` : 'EXCEEDED'} ${''.padEnd(Math.max(0, 22 - (minsLeft > 0 ? `~${minsLeft.toFixed(0)} min`.length : 8)))}║`);
+      out.push(line(`ETA:     ${minsLeft > 0 ? `~${minsLeft.toFixed(0)} min until limit` : 'EXCEEDED!'}`));
     }
   }
 
-  // Tool breakdown
   const tools = store.getToolBreakdown(sessionId);
   if (tools.length > 0) {
     const maxCost = Math.max(...tools.map(t => t.cost));
-    lines.push('╠══════════════════════════════════════════════╣');
-    lines.push('║  Per-Tool Breakdown                          ║');
-    lines.push('╠══════════════════════════════════════════════╣');
+    out.push(sep());
+    out.push(line('Per-Tool Breakdown'));
+    out.push(sep());
     for (const t of tools.slice(0, 8)) {
-      const name = t.tool.padEnd(12).slice(0, 12);
-      const b = bar(t.cost, maxCost, 15);
-      lines.push(`║  ${name} ${b} ${formatCost(t.cost).padStart(7)} (${String(t.count).padStart(3)}x) ║`);
+      const name = t.tool.padEnd(10).slice(0, 10);
+      const b = bar(t.cost, maxCost, 14);
+      const c = formatCost(t.cost).padStart(6);
+      const n = String(t.count).padStart(3);
+      out.push(line(`${name} ${b} ${c} ${n}x`));
     }
   }
 
-  lines.push('╚══════════════════════════════════════════════╝');
-  lines.push('');
-  return lines.join('\n');
+  out.push('╚' + '═'.repeat(W) + '╝');
+  out.push('');
+  return out.join('\n');
 }
 
 function dailyReport(days = 7) {
@@ -82,62 +96,59 @@ function dailyReport(days = 7) {
   const weeklyCost = store.getWeeklyCost();
   const monthlyCost = store.getMonthlyCost();
   const config = store.loadConfig();
-
-  const lines = [];
-  lines.push('');
-  lines.push('╔══════════════════════════════════════════════╗');
-  lines.push('║         COST GUARDIAN — Usage Report         ║');
-  lines.push('╠══════════════════════════════════════════════╣');
-  lines.push(`║  Today:          ${formatCost(dailyCost).padEnd(28)}║`);
-  lines.push(`║  This Week:      ${formatCost(weeklyCost).padEnd(28)}║`);
-  lines.push(`║  This Month:     ${formatCost(monthlyCost).padEnd(28)}║`);
-
-  // Budget status
   const budgets = config.budgets || {};
-  lines.push('╠══════════════════════════════════════════════╣');
-  lines.push('║  Budget Status                               ║');
-  lines.push('╠══════════════════════════════════════════════╣');
+
+  const out = [];
+  out.push('');
+  out.push('╔' + '═'.repeat(W) + '╗');
+  out.push('║' + '  COST GUARDIAN — Usage Report'.padEnd(W) + '║');
+  out.push(sep());
+  out.push(line(`Today:       ${formatCost(dailyCost)}`));
+  out.push(line(`This Week:   ${formatCost(weeklyCost)}`));
+  out.push(line(`This Month:  ${formatCost(monthlyCost)}`));
+
+  out.push(sep());
+  out.push(line('Budget Status'));
+  out.push(sep());
   if (budgets.daily) {
     const pct = Math.min((dailyCost / budgets.daily.limit) * 100, 100);
-    lines.push(`║  Daily:   ${bar(dailyCost, budgets.daily.limit, 20)} ${pct.toFixed(0).padStart(3)}% of ${formatCost(budgets.daily.limit)} ║`);
+    out.push(line(`Daily   ${bar(dailyCost, budgets.daily.limit, 20)} ${pct.toFixed(0).padStart(3)}% of ${formatCost(budgets.daily.limit)}`));
   }
   if (budgets.weekly) {
     const pct = Math.min((weeklyCost / budgets.weekly.limit) * 100, 100);
-    lines.push(`║  Weekly:  ${bar(weeklyCost, budgets.weekly.limit, 20)} ${pct.toFixed(0).padStart(3)}% of ${formatCost(budgets.weekly.limit)} ║`);
+    out.push(line(`Weekly  ${bar(weeklyCost, budgets.weekly.limit, 20)} ${pct.toFixed(0).padStart(3)}% of ${formatCost(budgets.weekly.limit)}`));
   }
   if (budgets.monthly) {
     const pct = Math.min((monthlyCost / budgets.monthly.limit) * 100, 100);
-    lines.push(`║  Monthly: ${bar(monthlyCost, budgets.monthly.limit, 20)} ${pct.toFixed(0).padStart(3)}% of ${formatCost(budgets.monthly.limit)} ║`);
+    out.push(line(`Monthly ${bar(monthlyCost, budgets.monthly.limit, 20)} ${pct.toFixed(0).padStart(3)}% of ${formatCost(budgets.monthly.limit)}`));
   }
 
-  // Daily chart
   if (breakdown.length > 0) {
     const maxCost = Math.max(...breakdown.map(d => d.cost));
-    lines.push('╠══════════════════════════════════════════════╣');
-    lines.push('║  Daily Spend (last ' + String(days).padEnd(2) + ' days)                 ║');
-    lines.push('╠══════════════════════════════════════════════╣');
+    out.push(sep());
+    out.push(line(`Daily Spend (last ${days} days)`));
+    out.push(sep());
     for (const d of breakdown) {
-      const dateShort = d.date.slice(5); // MM-DD
+      const dateShort = d.date.slice(5);
       const b = bar(d.cost, maxCost, 22);
-      lines.push(`║  ${dateShort} ${b} ${formatCost(d.cost).padStart(7)} ║`);
+      out.push(line(`${dateShort}  ${b} ${formatCost(d.cost).padStart(7)}`));
     }
   }
 
-  // Trend
   if (breakdown.length >= 2) {
     const recent = breakdown.slice(-3).reduce((s, d) => s + d.cost, 0) / Math.min(3, breakdown.length);
     const older = breakdown.slice(0, -3).reduce((s, d) => s + d.cost, 0) / Math.max(1, breakdown.length - 3);
     if (older > 0) {
       const change = ((recent - older) / older * 100).toFixed(0);
       const arrow = recent > older ? '↑' : '↓';
-      lines.push('╠══════════════════════════════════════════════╣');
-      lines.push(`║  Trend: ${arrow} ${Math.abs(change)}% vs prior period ${''.padEnd(Math.max(0, 20 - Math.abs(change).toString().length))}║`);
+      out.push(sep());
+      out.push(line(`Trend: ${arrow} ${Math.abs(change)}% vs prior period`));
     }
   }
 
-  lines.push('╚══════════════════════════════════════════════╝');
-  lines.push('');
-  return lines.join('\n');
+  out.push('╚' + '═'.repeat(W) + '╝');
+  out.push('');
+  return out.join('\n');
 }
 
 function statusLine(sessionId) {
