@@ -1,26 +1,72 @@
 {
   "version": "2026-03",
+  "schema": 2,
   "models": {
     "claude-opus-4-6": {
       "name": "Claude Opus 4.6",
+      "tier": "flagship",
       "input_per_million": 15.00,
       "output_per_million": 75.00,
       "cache_read_per_million": 1.50,
       "cache_write_per_million": 18.75
     },
+    "claude-opus-4-6-extended": {
+      "name": "Claude Opus 4.6 (Extended Thinking)",
+      "tier": "flagship",
+      "input_per_million": 15.00,
+      "output_per_million": 75.00,
+      "thinking_per_million": 75.00,
+      "cache_read_per_million": 1.50,
+      "cache_write_per_million": 18.75
+    },
     "claude-sonnet-4-6": {
       "name": "Claude Sonnet 4.6",
+      "tier": "balanced",
       "input_per_million": 3.00,
       "output_per_million": 15.00,
       "cache_read_per_million": 0.30,
       "cache_write_per_million": 3.75
     },
+    "claude-sonnet-4-6-extended": {
+      "name": "Claude Sonnet 4.6 (Extended Thinking)",
+      "tier": "balanced",
+      "input_per_million": 3.00,
+      "output_per_million": 15.00,
+      "thinking_per_million": 15.00,
+      "cache_read_per_million": 0.30,
+      "cache_write_per_million": 3.75
+    },
     "claude-haiku-4-5": {
       "name": "Claude Haiku 4.5",
+      "tier": "fast",
       "input_per_million": 0.80,
       "output_per_million": 4.00,
       "cache_read_per_million": 0.08,
       "cache_write_per_million": 1.00
+    },
+    "claude-3-5-sonnet": {
+      "name": "Claude 3.5 Sonnet (Legacy)",
+      "tier": "legacy",
+      "input_per_million": 3.00,
+      "output_per_million": 15.00,
+      "cache_read_per_million": 0.30,
+      "cache_write_per_million": 3.75
+    },
+    "claude-3-5-haiku": {
+      "name": "Claude 3.5 Haiku (Legacy)",
+      "tier": "legacy",
+      "input_per_million": 0.80,
+      "output_per_million": 4.00,
+      "cache_read_per_million": 0.08,
+      "cache_write_per_million": 1.00
+    },
+    "claude-3-opus": {
+      "name": "Claude 3 Opus (Legacy)",
+      "tier": "legacy",
+      "input_per_million": 15.00,
+      "output_per_million": 75.00,
+      "cache_read_per_million": 1.50,
+      "cache_write_per_million": 18.75
     }
   },
   "default_model": "claude-sonnet-4-6",
