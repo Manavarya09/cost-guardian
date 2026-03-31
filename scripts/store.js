@@ -398,7 +398,7 @@ module.exports = {
   getSessionTokens, getSessionStart, getToolBreakdown, getModelBreakdown,
   getBranchBreakdown, getDailyBreakdown, getTopExpensiveCalls, getTotalEntries,
   checkBudget, isOverridden, setOverride, cleanupOverrides,
-  exportCSV, exportJSON, logError,
+  exportCSV, exportJSON, logError, sql, escapeSQL,
   DB_PATH, CONFIG_PATH, DB_DIR, SCHEMA_VERSION
 };
 
