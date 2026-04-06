@@ -25,14 +25,14 @@ function analyzeWaste(sessionId) {
 
   // Get all tool calls for this session
   const rawData = store.sql(
-    `SELECT tool_name, est_input_tokens, est_output_tokens, est_cost_usd, input_chars, output_chars FROM usage WHERE session_id = ? ORDER BY id`,
+    `SELECT tool_name || '\t' || est_input_tokens || '\t' || est_output_tokens || '\t' || est_cost_usd || '\t' || input_chars || '\t' || output_chars FROM usage WHERE session_id = ? ORDER BY id`,
     sessionId
   );
 
   if (!rawData) return { score: 100, wastes: [], totalWaste: 0, totalCost: 0 };
 
   const calls = rawData.split('\n').filter(Boolean).map(line => {
-    const [tool, inTok, outTok, cost, inChars, outChars] = line.split('|');
+    const [tool, inTok, outTok, cost, inChars, outChars] = line.split('\t');
     return { tool, inTok: +inTok, outTok: +outTok, cost: +cost, inChars: +inChars, outChars: +outChars };
   });
 
@@ -161,7 +161,7 @@ function calculateSavings(sessionId) {
   store.initDb();
 
   const totalTokensRaw = store.sql(
-    `SELECT COALESCE(SUM(est_input_tokens), 0) || '|' || COALESCE(SUM(est_output_tokens), 0) || '|' || model FROM usage WHERE session_id = ? GROUP BY model`,
+    `SELECT COALESCE(SUM(est_input_tokens), 0) || '\t' || COALESCE(SUM(est_output_tokens), 0) || '\t' || model FROM usage WHERE session_id = ? GROUP BY model`,
     sessionId
   );
 
@@ -171,7 +171,7 @@ function calculateSavings(sessionId) {
   const modelUsage = [];
 
   for (const line of totalTokensRaw.split('\n').filter(Boolean)) {
-    const [inp, out, model] = line.split('|');
+    const [inp, out, model] = line.split('\t');
     totalInput += parseInt(inp);
     totalOutput += parseInt(out);
     modelUsage.push({ model, inputTokens: parseInt(inp), outputTokens: parseInt(out) });
@@ -221,12 +221,12 @@ function detectAnomalies(sessionId) {
 
   // Find top cost driver
   const topTool = store.sql(
-    `SELECT tool_name || '|' || SUM(est_cost_usd) || '|' || COUNT(*) FROM usage WHERE session_id = ? GROUP BY tool_name ORDER BY SUM(est_cost_usd) DESC LIMIT 1`,
+    `SELECT tool_name || '\t' || SUM(est_cost_usd) || '\t' || COUNT(*) FROM usage WHERE session_id = ? GROUP BY tool_name ORDER BY SUM(est_cost_usd) DESC LIMIT 1`,
     sessionId
   );
   let topDriver = { tool: 'unknown', cost: 0, count: 0 };
   if (topTool) {
-    const [tool, cost, count] = topTool.split('|');
+    const [tool, cost, count] = topTool.split('\t');
     topDriver = { tool, cost: parseFloat(cost), count: parseInt(count) };
   }
 

@@ -216,12 +216,12 @@ function getSessionStart(sessionId) {
 function getToolBreakdown(sessionId) {
   initDb();
   const result = sql(
-    `SELECT tool_name || '|' || COALESCE(SUM(est_cost_usd), 0) || '|' || COUNT(*) FROM usage WHERE session_id = ? GROUP BY tool_name ORDER BY SUM(est_cost_usd) DESC`,
+    `SELECT tool_name || '\t' || COALESCE(SUM(est_cost_usd), 0) || '\t' || COUNT(*) FROM usage WHERE session_id = ? GROUP BY tool_name ORDER BY SUM(est_cost_usd) DESC`,
     sessionId
   );
   if (!result) return [];
   return result.split('\n').filter(Boolean).map(line => {
-    const [tool, cost, count] = line.split('|');
+    const [tool, cost, count] = line.split('\t');
     return { tool, cost: parseFloat(cost), count: parseInt(count) };
   });
 }
@@ -229,12 +229,12 @@ function getToolBreakdown(sessionId) {
 function getModelBreakdown(sessionId) {
   initDb();
   const result = sql(
-    `SELECT model || '|' || COALESCE(SUM(est_cost_usd), 0) || '|' || COALESCE(SUM(est_input_tokens + est_output_tokens), 0) FROM usage WHERE session_id = ? GROUP BY model ORDER BY SUM(est_cost_usd) DESC`,
+    `SELECT model || '\t' || COALESCE(SUM(est_cost_usd), 0) || '\t' || COALESCE(SUM(est_input_tokens + est_output_tokens), 0) FROM usage WHERE session_id = ? GROUP BY model ORDER BY SUM(est_cost_usd) DESC`,
     sessionId
   );
   if (!result) return [];
   return result.split('\n').filter(Boolean).map(line => {
-    const [model, cost, tokens] = line.split('|');
+    const [model, cost, tokens] = line.split('\t');
     return { model, cost: parseFloat(cost), tokens: parseInt(tokens) };
   });
 }
@@ -242,11 +242,11 @@ function getModelBreakdown(sessionId) {
 function getBranchBreakdown(days) {
   initDb();
   const result = sql(
-    `SELECT branch || '|' || COALESCE(SUM(est_cost_usd), 0) || '|' || COUNT(*) FROM usage WHERE branch != '' AND timestamp >= datetime('now', '-${parseInt(days) || 30} days') GROUP BY branch ORDER BY SUM(est_cost_usd) DESC`
+    `SELECT branch || '\t' || COALESCE(SUM(est_cost_usd), 0) || '\t' || COUNT(*) FROM usage WHERE branch != '' AND timestamp >= datetime('now', '-${parseInt(days) || 30} days') GROUP BY branch ORDER BY SUM(est_cost_usd) DESC`
   );
   if (!result) return [];
   return result.split('\n').filter(Boolean).map(line => {
-    const [branch, cost, count] = line.split('|');
+    const [branch, cost, count] = line.split('\t');
     return { branch, cost: parseFloat(cost), count: parseInt(count) };
   });
 }
@@ -254,11 +254,11 @@ function getBranchBreakdown(days) {
 function getDailyBreakdown(days) {
   initDb();
   const result = sql(
-    `SELECT date(timestamp) || '|' || COALESCE(SUM(est_cost_usd), 0) || '|' || COALESCE(SUM(est_input_tokens + est_output_tokens), 0) FROM usage WHERE timestamp >= datetime('now', '-${parseInt(days) || 7} days') GROUP BY date(timestamp) ORDER BY date(timestamp)`
+    `SELECT date(timestamp) || '\t' || COALESCE(SUM(est_cost_usd), 0) || '\t' || COALESCE(SUM(est_input_tokens + est_output_tokens), 0) FROM usage WHERE timestamp >= datetime('now', '-${parseInt(days) || 7} days') GROUP BY date(timestamp) ORDER BY date(timestamp)`
   );
   if (!result) return [];
   return result.split('\n').filter(Boolean).map(line => {
-    const [date, cost, tokens] = line.split('|');
+    const [date, cost, tokens] = line.split('\t');
     return { date, cost: parseFloat(cost), tokens: parseInt(tokens) };
   });
 }
@@ -267,12 +267,12 @@ function getTopExpensiveCalls(sessionId, limit) {
   initDb();
   const n = parseInt(limit) || 3;
   const result = sql(
-    `SELECT tool_name || '|' || est_cost_usd || '|' || est_input_tokens || '|' || est_output_tokens FROM usage WHERE session_id = ? ORDER BY est_cost_usd DESC LIMIT ${n}`,
+    `SELECT tool_name || '\t' || est_cost_usd || '\t' || est_input_tokens || '\t' || est_output_tokens FROM usage WHERE session_id = ? ORDER BY est_cost_usd DESC LIMIT ${n}`,
     sessionId
   );
   if (!result) return [];
   return result.split('\n').filter(Boolean).map(line => {
-    const [tool, cost, inTok, outTok] = line.split('|');
+    const [tool, cost, inTok, outTok] = line.split('\t');
     return { tool, cost: parseFloat(cost), inputTokens: parseInt(inTok), outputTokens: parseInt(outTok) };
   });
 }
@@ -385,9 +385,9 @@ function exportCSV(sessionId, filepath) {
 function exportJSON(sessionId, filepath) {
   initDb();
   const where = sessionId ? `WHERE session_id = ${escapeSQL(sessionId)}` : '';
-  const result = sql(`SELECT timestamp || '|' || session_id || '|' || tool_name || '|' || model || '|' || est_input_tokens || '|' || est_output_tokens || '|' || est_cost_usd || '|' || branch FROM usage ${where} ORDER BY timestamp`);
+  const result = sql(`SELECT timestamp || '\t' || session_id || '\t' || tool_name || '\t' || model || '\t' || est_input_tokens || '\t' || est_output_tokens || '\t' || est_cost_usd || '\t' || branch FROM usage ${where} ORDER BY timestamp`);
   const rows = result ? result.split('\n').filter(Boolean).map(line => {
-    const [timestamp, session_id, tool_name, model, input_tokens, output_tokens, cost_usd, branch] = line.split('|');
+    const [timestamp, session_id, tool_name, model, input_tokens, output_tokens, cost_usd, branch] = line.split('\t');
     return { timestamp, session_id, tool_name, model, input_tokens: +input_tokens, output_tokens: +output_tokens, cost_usd: +cost_usd, branch };
   }) : [];
   const json = JSON.stringify(rows, null, 2);
