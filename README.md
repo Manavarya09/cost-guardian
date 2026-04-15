@@ -63,7 +63,7 @@ Potential saving: $3.69 (78% cheaper)
 ### Anomaly Detection
 Catches runaway sessions before they drain your limits:
 ```
-⚠️ ANOMALY: 3.2x your average session cost
+ ANOMALY: 3.2x your average session cost
 This session: $14.20 | Average: $4.40
 Top driver: Agent ($9.80, 4x)
 ```
