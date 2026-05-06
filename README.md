@@ -1,5 +1,11 @@
 # Cost Guardian
 
+[![License: MIT](https://img.shields.io/github/license/Manavarya09/cost-guardian?color=0a0a0a)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/Manavarya09/cost-guardian?style=flat&color=0a0a0a)](https://github.com/Manavarya09/cost-guardian/stargazers)
+[![Issues](https://img.shields.io/github/issues/Manavarya09/cost-guardian?color=0a0a0a)](https://github.com/Manavarya09/cost-guardian/issues)
+[![Last commit](https://img.shields.io/github/last-commit/Manavarya09/cost-guardian?color=0a0a0a)](https://github.com/Manavarya09/cost-guardian/commits/main)
+
+
 **The only Claude Code cost tool that tells you WHERE you're wasting money and HOW to stop.**
 
 Other tools show what you spent. Cost Guardian shows what you *wasted*, what you *got for it*, and what you *could have saved* — with an efficiency score, ROI metrics, and model savings calculator that no other tool has.
